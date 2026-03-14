@@ -1,6 +1,5 @@
 <?php
-// --- 1. CONNESSIONE ---
-$connessione = new mysqli("localhost", "root", "", "gestione_spese");
+require_once 'db.php';
 
 // --- 2. LOGICA ELIMINA (DELETE) ---
 if (isset($_GET['elimina'])) {
@@ -12,14 +11,25 @@ if (isset($_GET['elimina'])) {
 // --- 3. LOGICA SALVATAGGIO (CREATE) ---
 $messaggio = "";
 if (isset($_POST['salva_bottone'])) {
-    $titolo = $connessione->real_escape_string($_POST['nome_spesa']);
-    $importo = $connessione->real_escape_string($_POST['importo_spesa']);
-    $categoria = "Generale";
-    $sql_insert = "INSERT INTO spese (titolo, importo, categoria) VALUES ('$titolo', '$importo', '$categoria')";
-    if ($connessione->query($sql_insert) === TRUE) {
-        $messaggio = "✅ Spesa salvata!";
+    //1.Recupero dati base
+    $titolo=$_POST['nome_spesa'];
+    $importo=$_POST['importo_spesa'];
+    $categoria = isset($_POST['categoria_spesa']) ? $_POST['categoria_spesa'] : "Altro";
+
+    $sql = "INSERT INTO spese (titolo, importo, categoria) VALUES (?, ?, ?)";
+
+    $stmt=$connessione->prepare($sql);
+    // s = stringa, d = double (prezzo), s = stringa
+        $stmt->bind_param("sds", $titolo, $importo, $categoria);
+
+        //4.ESECUZIONE
+        if($stmt->execute()){
+            $messaggio="Spesa salvata in sicurezza!";
+        }else{
+            $messaggio="Errore durante il salvataggio: ".$stmt->error;
+        }
+        $stmt->close();
     }
-}
 
 // --- 4. LETTURA DATI E CALCOLO TOTALE ---
 $sql_select = "SELECT * FROM spese ORDER BY data DESC";
@@ -32,18 +42,7 @@ $totale_complessivo = 0; // Variabile per accumulare la somma
 <html>
 <head>
     <title>Gestore Spese Elena Pro</title>
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f0f4f8; display: flex; flex-direction: column; align-items: center; padding: 40px; }
-        .scheda { background-color: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 400px; margin-bottom: 30px; }
-        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
-        button { width: 100%; background-color: #0056b3; color: white; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .tabella-spese { width: 100%; max-width: 800px; background: white; border-collapse: collapse; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .tabella-spese th, .tabella-spese td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
-        .tabella-spese th { background-color: #0056b3; color: white; }
-        .riga-totale { background-color: #eef2f7; font-weight: bold; font-size: 1.1em; }
-        .btn-elimina { color: #d9534f; text-decoration: none; font-weight: bold; font-size: 0.9em; }
-        .btn-elimina:hover { color: #c9302c; }
-    </style>
+    <link rel="stylesheet"href="style.css">
 </head>
 <body>
 
@@ -53,7 +52,16 @@ $totale_complessivo = 0; // Variabile per accumulare la somma
         <form method="POST">
             <input type="text" name="nome_spesa" placeholder="Cosa hai comprato?" required>
             <input type="number" step="0.01" name="importo_spesa" placeholder="Importo (€)" required>
+            <select name="categoria_spesa" required>
+    <option value="" disabled selected>Scegli una categoria...</option>
+    <option value="Alimentari">Alimentari 🍎</option>
+    <option value="Trasporti">Trasporti 🚗</option>
+    <option value="Svago">Svago 🍕</option>
+    <option value="Bollette">Bollette 💡</option>
+    <option value="Altro">Altro ✨</option>
+</select>
             <button type="submit" name="salva_bottone">Salva Spesa</button>
+            
         </form>
     </div>
 
