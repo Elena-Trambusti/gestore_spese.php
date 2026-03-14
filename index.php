@@ -1,5 +1,6 @@
 <?php
 require_once 'db.php';
+require_once 'functions.php'; // Stai dicendo: "Usa le ricette che ci sono qui dentro"
 
 // --- 2. LOGICA ELIMINA (DELETE) ---
 if (isset($_GET['elimina'])) {
@@ -79,7 +80,6 @@ $totale_complessivo = 0; // Variabile per accumulare la somma
             <?php
             if ($risultato->num_rows > 0) {
                 while($riga = $risultato->fetch_assoc()) {
-                    $totale_complessivo += $riga["importo"]; // Sommiamo ogni riga al totale
                     echo "<tr>";
                     echo "<td>" . $riga["titolo"] . "</td>";
                     echo "<td>€ " . number_format($riga["importo"], 2, ',', '.') . "</td>";
@@ -91,9 +91,9 @@ $totale_complessivo = 0; // Variabile per accumulare la somma
             }
             ?>
             <tr class="riga-totale">
-                <td>TOTALE</td>
-                <td colspan="3">€ <?php echo number_format($totale_complessivo, 2, ',', '.'); ?></td>
-            </tr>
+    <td colspan="3" style="text-align: right;"><strong>TOTALE COMPLESSIVO:</strong></td>
+    <td><strong>€ <?php echo number_format(calcolaTotale($risultato), 2, ',', '.'); ?></strong></td>
+</tr>
         </tbody>
     </table>
 
